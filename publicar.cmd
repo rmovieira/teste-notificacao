@@ -1,0 +1,1 @@
+npm run build && copy build\index.html build\200.html && surge .\build --domain teste-notificacao.surge.sh
