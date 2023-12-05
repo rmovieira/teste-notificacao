@@ -1,26 +1,51 @@
 import logo from './logo.svg'
 import './App.css'
-import { useEffect } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
-function App() {
-
+export default function App() {
+  const [registerServiceWorker, setRegisterServiceWorker] = useState()
   // useEffect(() => {
-  //   if ("serviceWorker" in navigator) {
-  //     // Registra um service worker hospeadado na raiz do
-  //     // site usando o escopo padrão
-  //     navigator.serviceWorker
-  //       .register("/sw.js")
-  //       .then(function (registration) {
-  //         console.log("Service worker  registrado com sucesso:", registration)
-  //       })
-  //       .catch(function (error) {
-  //         console.log("Falha ao Registrar o Service Worker:", error)
-  //       })
-  //   } else {
-  //     console.log("Service workers não suportado!")
+  //   if (Notification.permission !== 'granted') {
+  //     Notification.requestPermission()
+  //     return
   //   }
-
   // }, [])
+
+  useEffect(() => {
+    async function load() {
+      const swRegistration = await navigator.serviceWorker.register(`${window.location.pathname}/service-worker.js`)
+      setRegisterServiceWorker(swRegistration)
+    }
+    load()
+  }, [])
+
+  const darPermissao = () => {
+    Notification.requestPermission()
+  }
+
+  const notificacaoAndroid = useCallback(() => {
+    if (!registerServiceWorker) {
+      alert("service worker nao registrado")
+      return
+    }
+    if (!('ServiceWorkerRegistration' in window)) {
+      alert('Persistent Notification API not supported!')
+      return
+    }
+    try {
+      navigator.serviceWorker.getRegistration(`${window.location.pathname}/service-worker.js`)
+        .then((reg) => {
+          const options = {
+            icon: `${window.location.pathname}/logo192.png`,
+            badge: `${window.location.pathname}/logo192.png`
+          }
+          reg.showNotification("Validação de notificação", options)
+        })
+        .catch((err) => console.log('Service Worker registration error: ' + err))
+    } catch (err) {
+      console.log('Notification API error: ' + err)
+    }
+  }, [registerServiceWorker])
 
   const notificacaoDesktop = () => {
     if (!('Notification' in window)) {
@@ -33,38 +58,28 @@ function App() {
       return
     }
 
-    new Notification('Notificação Tooooopper!')
+    new Notification('Validação de notificação!')
   }
-
-  const notificacaoAndroid = () => {
-    if (!('ServiceWorkerRegistration' in window)) {
-      alert('Persistent Notification API not supported!')
-      return
-    }
-    try {
-      navigator.serviceWorker.getRegistration()
-        .then((reg) => reg.showNotification("Hi there - persistent!"))
-        .catch((err) => alert('Service Worker registration error: ' + err));
-    } catch (err) {
-      alert('Notification API error: ' + err);
-    }
-  }
-
 
   return (
     <div className="App">
-      <button onClick={notificacaoDesktop}>
+      <button onClick={darPermissao} style={{ height: '80px' }}>
+        Dar permissão
+      </button>
+
+      <br />
+      <br />
+      <br />
+      <button onClick={notificacaoDesktop} style={{ height: '80px' }}>
         Notificação de desktop
       </button>
 
       <br />
       <br />
       <br />
-      <button onClick={notificacaoAndroid}>
+      <button onClick={notificacaoAndroid} style={{ height: '80px' }}>
         Notificação de dispositivo móvel
       </button>
     </div >
   )
 }
-
-export default App
